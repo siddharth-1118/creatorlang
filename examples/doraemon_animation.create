@@ -1,0 +1,333 @@
+# Doraemon Flying Animation - CreatorLang Example
+# This creates a 10-second animated video of Doraemon flying with his propeller
+
+video "Doraemon_Flying":
+    duration 10 seconds
+    fps 60
+    size 1920x1080
+    background gradient(#87CEEB, #E0F6FF)  # Sky blue gradient
+    
+    # Add floating clouds in background
+    scene "clouds" from 0s to 10s:
+        # Cloud 1
+        ellipse "cloud1":
+            position (-100, 200)
+            size (150, 80)
+            color white
+            opacity 0.8
+            animation slide_right
+            speed 50px_per_second
+        
+        # Cloud 2  
+        ellipse "cloud2":
+            position (1500, 300)
+            size (200, 100)
+            color white
+            opacity 0.7
+            animation slide_left
+            speed 40px_per_second
+        
+        # Cloud 3
+        ellipse "cloud3":
+            position (800, 150)
+            size (180, 90)
+            color white
+            opacity 0.75
+            animation float
+    
+    # DORAEMON CHARACTER (Full body with all parts)
+    scene "doraemon" from 0s to 10s:
+        group "doraemon_body":
+            # Main body (blue circle)
+            circle "body":
+                position (400, 500)
+                radius 150
+                color #0099CC  # Doraemon blue
+                shadow 0 5px 20px rgba(0,0,0,0.3)
+            
+            # White belly
+            ellipse "belly":
+                position (400, 550)
+                size (180, 200)
+                color white
+            
+            # Head (blue circle)
+            circle "head":
+                position (400, 350)
+                radius 140
+                color #0099CC
+            
+            # White face
+            ellipse "face":
+                position (400, 380)
+                size (200, 180)
+                color white
+            
+            # Eyes (big round eyes)
+            ellipse "left_eye":
+                position (360, 350)
+                size (60, 80)
+                color white
+                border 3px black
+            
+            ellipse "right_eye":
+                position (440, 350)
+                size (60, 80)
+                color white
+                border 3px black
+            
+            # Eye pupils (looking around animation)
+            circle "left_pupil":
+                position (365, 365)
+                radius 15
+                color black
+                animation bounce
+                duration 2s
+                repeat infinite
+            
+            circle "right_pupil":
+                position (445, 365)
+                radius 15
+                color black
+                animation bounce
+                duration 2s
+                repeat infinite
+            
+            # Nose (red circle)
+            circle "nose":
+                position (400, 390)
+                radius 18
+                color #FF0000
+                shadow 0 2px 5px rgba(255,0,0,0.5)
+            
+            # Whiskers (6 lines)
+            line "whisker_left_1":
+                from (340, 410) to (280, 400)
+                thickness 2px
+                color black
+            
+            line "whisker_left_2":
+                from (340, 425) to (280, 425)
+                thickness 2px
+                color black
+            
+            line "whisker_left_3":
+                from (340, 440) to (280, 450)
+                thickness 2px
+                color black
+            
+            line "whisker_right_1":
+                from (460, 410) to (520, 400)
+                thickness 2px
+                color black
+            
+            line "whisker_right_2":
+                from (460, 425) to (520, 425)
+                thickness 2px
+                color black
+            
+            line "whisker_right_3":
+                from (460, 440) to (520, 450)
+                thickness 2px
+                color black
+            
+            # Mouth (smile curve)
+            arc "mouth":
+                position (400, 420)
+                size 100
+                start_angle 0
+                end_angle 180
+                thickness 3px
+                color black
+            
+            # Collar (red with bell)
+            rectangle "collar":
+                position (340, 460)
+                size (120, 20)
+                color #FF0000
+                corner_radius 5px
+            
+            # Bell (yellow circle)
+            circle "bell":
+                position (400, 470)
+                radius 15
+                color #FFD700
+                border 2px #B8860B
+                shadow 0 2px 5px rgba(255,215,0,0.6)
+            
+            # Bell detail (cross lines)
+            line "bell_line_v":
+                from (400, 460) to (400, 480)
+                thickness 1px
+                color #B8860B
+            
+            line "bell_line_h":
+                from (390, 470) to (410, 470)
+                thickness 1px
+                color #B8860B
+            
+            # Arms (rounded rectangles)
+            ellipse "left_arm":
+                position (280, 520)
+                size (80, 50)
+                color #0099CC
+                rotation 30deg
+            
+            ellipse "right_arm":
+                position (520, 520)
+                size (80, 50)
+                color #0099CC
+                rotation -30deg
+            
+            # Hands (white circles)
+            circle "left_hand":
+                position (250, 540)
+                radius 25
+                color white
+                border 2px #0099CC
+            
+            circle "right_hand":
+                position (550, 540)
+                radius 25
+                color white
+                border 2px #0099CC
+            
+            # Legs (short rounded)
+            ellipse "left_leg":
+                position (360, 680)
+                size (60, 80)
+                color #0099CC
+            
+            ellipse "right_leg":
+                position (440, 680)
+                size (60, 80)
+                color #0099CC
+            
+            # Feet (white ovals)
+            ellipse "left_foot":
+                position (340, 720)
+                size (70, 40)
+                color white
+                border 2px #0099CC
+            
+            ellipse "right_foot":
+                position (460, 720)
+                size (70, 40)
+                color white
+                border 2px #0099CC
+            
+            # Tail (small circle)
+            circle "tail":
+                position (520, 630)
+                radius 12
+                color #FF0000
+            
+            # PROPELLER ON HEAD (for flying)
+            group "propeller":
+                # Propeller stick
+                rectangle "propeller_stick":
+                    position (390, 220)
+                    size (20, 40)
+                    color #666666
+                    corner_radius 5px
+                
+                # Propeller top (spinning)
+                rectangle "propeller_blade":
+                    position (300, 210)
+                    size (200, 15)
+                    color #FFD700
+                    corner_radius 8px
+                    pivot_point center
+                    rotation 0 to 360deg
+                    animation spin
+                    duration 0.5s
+                    repeat infinite
+                    easing linear
+            
+            # ENTIRE DORAEMON GROUP MOVEMENT ANIMATION
+            # Flying across the screen from left to right
+            animation_group:
+                # Horizontal movement
+                position_x: 200 to 1600
+                duration 10s
+                easing ease_in_out
+                
+                # Vertical bobbing (up and down slightly)
+                position_y: 500 to 450 to 500
+                duration 2s
+                repeat infinite
+                easing ease_in_out
+                
+                # Slight tilting while flying
+                rotation: -5deg to 5deg to -5deg
+                duration 1.5s
+                repeat infinite
+    
+    # SPEECH BUBBLE appears at 3 seconds
+    scene "speech" from 3s to 6s:
+        # Speech bubble
+        ellipse "bubble":
+            position (700, 300)
+            size (300, 150)
+            color white
+            border 3px black
+            corner_radius 20px
+            animation pop_in
+            duration 0.3s
+        
+        # Speech bubble tail (triangle)
+        polygon "bubble_tail":
+            points: [(600, 380), (550, 450), (650, 400)]
+            color white
+            border 3px black
+        
+        # Text inside bubble
+        text "I'm Doraemon!":
+            position (700, 300)
+            align center
+            font "Comic Sans MS Bold" 36px
+            color #0099CC
+            animation fade_in
+            duration 0.5s
+    
+    # SPARKLES/MAGIC EFFECTS around Doraemon
+    scene "sparkles" from 0s to 10s:
+        # Generate multiple sparkle particles
+        for i in range(20):
+            star "sparkle":
+                position random(100, 1800), random(100, 900)
+                size random(10, 30)
+                color random(#FFFF00, #FFD700, #FFF8DC)
+                opacity 0 to 1 to 0
+                animation twinkle
+                duration random(0.5, 2.0)s
+                delay random(0, 10)s
+                repeat infinite
+    
+    # TITLE TEXT at bottom
+    scene "title" from 0s to 10s:
+        rectangle "title_bg":
+            position (760, 950)
+            size (400, 80)
+            color rgba(0,0,0,0.7)
+            corner_radius 15px
+        
+        text "Doraemon Flying Adventure":
+            position (960, 970)
+            align center
+            font "Arial Bold" 32px
+            color white
+            shadow 2px 2px 5px rgba(0,0,0,0.8)
+    
+    # BACKGROUND MUSIC (optional)
+    # audio "doraemon_theme.mp3":
+    #     volume 0.5
+    #     loop yes
+    
+    # Export the video
+    export "doraemon_flying_animation.mp4"
+    export_gif "doraemon_flying.gif" fps 30
+
+# Run command:
+# creatorlang examples/doraemon_animation.create
+# Output: doraemon_flying_animation.mp4 (10 second animated video!)
