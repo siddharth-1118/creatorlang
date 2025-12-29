@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""CreatorLang Compiler v2 - Parse Doraemon syntax and render shapes"""
+"""CreatorLang Compiler v3 - Fixed line-by-line parser"""
 
 import re
 import sys
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import json
 
 class CreatorLangCompiler:
@@ -13,114 +13,127 @@ class CreatorLangCompiler:
         self.output_dir = "output"
         self.video_config = {}
         self.shapes = []
-        self.groups = []
         
     def parse(self):
-        """Parse the .create file with Doraemon syntax"""
+        """Parse using line-by-line approach"""
         with open(self.source_file, 'r', encoding='utf-8') as f:
-            content = f.read()
+            lines = f.readlines()
         
-        # Remove comments
-        content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
+        for line in lines:
+            line = line.strip()
+            
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                continue
+            
+            # Parse video config
+            if line.startswith('video'):
+                match = re.search(r'"([^"]+)"', line)
+                if match:
+                    self.video_config['name'] = match.group(1)
+            
+            elif line.startswith('size'):
+                match = re.search(r'(\d+)x(\d+)', line)
+                if match:
+                    self.video_config['width'] = int(match.group(1))
+                    self.video_config['height'] = int(match.group(2))
+            
+            elif line.startswith('background gradient'):
+                match = re.search(r'gradient\(([^)]+)\)', line)
+                if match:
+                    colors = [c.strip() for c in match.group(1).split(',')]
+                    self.video_config['background'] = colors
+            
+            # Parse circles: circle "name": position (x, y) radius R color COLOR
+            elif line.startswith('circle'):
+                parts = line.split()
+                try:
+                    name = parts[1].strip('":')  
+                    pos_idx = parts.index('position')
+                    x = int(parts[pos_idx + 1].strip('(,'))
+                    y = int(parts[pos_idx + 2].strip('),'))
+                    radius_idx = parts.index('radius')
+                    radius = int(parts[radius_idx + 1])
+                    color_idx = parts.index('color')
+                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
+                    
+                    self.shapes.append({
+                        'type': 'circle',
+                        'name': name,
+                        'x': x,
+                        'y': y,
+                        'radius': radius,
+                        'color': color
+                    })
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not parse circle line: {line}")
+            
+            # Parse ellipses: ellipse "name": position (x, y) size (w, h) color COLOR
+            elif line.startswith('ellipse'):
+                parts = line.split()
+                try:
+                    name = parts[1].strip('":')  
+                    pos_idx = parts.index('position')
+                    x = int(parts[pos_idx + 1].strip('(,'))
+                    y = int(parts[pos_idx + 2].strip('),'))
+                    size_idx = parts.index('size')
+                    width = int(parts[size_idx + 1].strip('(,'))
+                    height = int(parts[size_idx + 2].strip('),'))
+                    color_idx = parts.index('color')
+                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
+                    
+                    self.shapes.append({
+                        'type': 'ellipse',
+                        'name': name,
+                        'x': x,
+                        'y': y,
+                        'width': width,
+                        'height': height,
+                        'color': color
+                    })
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not parse ellipse line: {line}")
         
-        # Extract video configuration
-        video_match = re.search(r'video\s+"([^"]+)":', content)
-        if video_match:
-            self.video_config['name'] = video_match.group(1)
-        
-        # Extract basic video properties
-        duration_match = re.search(r'duration\s+(\d+)\s+seconds', content)
-        if duration_match:
-            self.video_config['duration'] = int(duration_match.group(1))
-        
-        size_match = re.search(r'size\s+(\d+)x(\d+)', content)
-        if size_match:
-            self.video_config['width'] = int(size_match.group(1))
-            self.video_config['height'] = int(size_match.group(2))
-        else:
-            self.video_config['width'] = 1920
-            self.video_config['height'] = 1080
-        
-        # Extract background
-        bg_match = re.search(r'background\s+gradient\(([^)]+)\)', content)
-        if bg_match:
-            colors = bg_match.group(1).split(',')
-            self.video_config['background'] = [c.strip() for c in colors]
-        
-        # Parse shapes (circle, ellipse, rectangle, line)
-        self._parse_shapes(content)
+        # Set defaults if not specified
+        if 'width' not in self.video_config:
+            self.video_config['width'] = 800
+        if 'height' not in self.video_config:
+            self.video_config['height'] = 600
         
         print(f"Parsed {len(self.shapes)} shapes from {self.source_file}")
-    
-    def _parse_shapes(self, content):
-        """Extract all shapes from content"""
-        # Parse circles
-        circle_pattern = r'circle\s+"([^"]+)":\s*position\s*\(([^)]+)\)\s*radius\s+(\d+)\s*color\s+([#\w]+)'
-        for match in re.finditer(circle_pattern, content, re.DOTALL):
-            name = match.group(1)
-            pos = match.group(2).split(',')
-            x, y = int(pos[0].strip()), int(pos[1].strip())
-            radius = int(match.group(3))
-            color = match.group(4).strip()
-            self.shapes.append({
-                'type': 'circle',
-                'name': name,
-                'x': x,
-                'y': y,
-                'radius': radius,
-                'color': color
-            })
-        
-        # Parse ellipses
-        ellipse_pattern = r'ellipse\s+"([^"]+)":\s*position\s*\(([^)]+)\)\s*size\s*\(([^)]+)\)\s*color\s+([#\w]+)'
-        for match in re.finditer(ellipse_pattern, content, re.DOTALL):
-            name = match.group(1)
-            pos = match.group(2).split(',')
-            x, y = int(pos[0].strip()), int(pos[1].strip())
-            size = match.group(3).split(',')
-            width, height = int(size[0].strip()), int(size[1].strip())
-            color = match.group(4).strip()
-            self.shapes.append({
-                'type': 'ellipse',
-                'name': name,
-                'x': x,
-                'y': y,
-                'width': width,
-                'height': height,
-                'color': color
-            })
     
     def _parse_color(self, color_str):
         """Convert color string to RGB tuple"""
         color_map = {
-            'white': '#FFFFFF',
-            'black': '#000000',
-            'red': '#FF0000',
-            'blue': '#0000FF',
+            'white': (255, 255, 255),
+            'black': (0, 0, 0),
+            'red': (255, 0, 0),
+            'blue': (0, 0, 255),
         }
         
-        color = color_map.get(color_str.lower(), color_str)
+        if color_str.lower() in color_map:
+            return color_map[color_str.lower()]
         
-        if color.startswith('#'):
-            color = color.lstrip('#')
+        # Parse hex color
+        if color_str.startswith('#'):
+            color = color_str.lstrip('#')
             if len(color) == 6:
                 return tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
         
         return (255, 255, 255)  # Default white
     
     def compile(self):
-        """Compile to visual output with actual rendering"""
+        """Compile and render shapes"""
         os.makedirs(self.output_dir, exist_ok=True)
         
-        # Create image with background
-        width = self.video_config.get('width', 1920)
-        height = self.video_config.get('height', 1080)
+        width = self.video_config['width']
+        height = self.video_config['height']
         
-        # Create gradient background
+        # Create image with gradient background
         img = Image.new('RGB', (width, height))
         draw = ImageDraw.Draw(img)
         
-        # Simple gradient (top to bottom)
+        # Draw gradient background
         if 'background' in self.video_config and len(self.video_config['background']) >= 2:
             start_color = self._parse_color(self.video_config['background'][0])
             end_color = self._parse_color(self.video_config['background'][1])
@@ -136,16 +149,15 @@ class CreatorLangCompiler:
         
         # Draw all shapes
         for shape in self.shapes:
+            color = self._parse_color(shape['color'])
+            
             if shape['type'] == 'circle':
-                x, y = shape['x'], shape['y']
-                r = shape['radius']
-                color = self._parse_color(shape['color'])
+                x, y, r = shape['x'], shape['y'], shape['radius']
                 draw.ellipse([x-r, y-r, x+r, y+r], fill=color)
             
             elif shape['type'] == 'ellipse':
                 x, y = shape['x'], shape['y']
                 w, h = shape['width']//2, shape['height']//2
-                color = self._parse_color(shape['color'])
                 draw.ellipse([x-w, y-h, x+w, y+h], fill=color)
         
         # Save output
@@ -153,7 +165,7 @@ class CreatorLangCompiler:
         img.save(output_path)
         print(f"✓ Rendered image to {output_path}")
         
-        # Save JSON data
+        # Save JSON
         json_path = os.path.join(self.output_dir, 'output.json')
         with open(json_path, 'w') as f:
             json.dump({
