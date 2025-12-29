@@ -1,0 +1,69 @@
+# Simplified Doraemon - Single-line format for current compiler
+# This version uses compact syntax that the regex parser can handle
+
+video "Doraemon_Simple":
+size 800x600
+background gradient(#87CEEB, #E0F6FF)
+
+# Doraemon's blue body (main circle)
+circle "body": position (400, 350) radius 80 color #0099CC
+
+# White belly (ellipse on top of body)
+ellipse "belly": position (400, 370) size (100, 120) color white
+
+# Doraemon's head (blue circle)
+circle "head": position (400, 250) radius 90 color #0099CC
+
+# White face (ellipse)
+ellipse "face": position (400, 270) size (130, 110) color white
+
+# Left eye
+ellipse "left_eye": position (370, 250) size (35, 45) color white
+
+# Right eye
+ellipse "right_eye": position (430, 250) size (35, 45) color white
+
+# Left pupil
+circle "left_pupil": position (372, 260) radius 8 color black
+
+# Right pupil  
+circle "right_pupil": position (432, 260) radius 8 color black
+
+# Red nose
+circle "nose": position (400, 280) radius 12 color #FF0000
+
+# White belly oval
+ellipse "belly_center": position (400, 440) size (90, 110) color white
+
+# Red collar
+ellipse "collar": position (400, 325) size (110, 15) color #FF0000
+
+# Yellow bell
+circle "bell": position (400, 332) radius 10 color #FFD700
+
+# Left arm
+ellipse "left_arm": position (330, 380) size (45, 30) color #0099CC
+
+# Right arm
+ellipse "right_arm": position (470, 380) size (45, 30) color #0099CC
+
+# Left hand
+circle "left_hand": position (310, 385) radius 18 color white
+
+# Right hand
+circle "right_hand": position (490, 385) radius 18 color white
+
+# Left leg
+ellipse "left_leg": position (370, 480) size (35, 50) color #0099CC
+
+# Right leg
+ellipse "right_leg": position (430, 480) size (35, 50) color #0099CC
+
+# Left foot
+ellipse "left_foot": position (360, 520) size (40, 25) color white
+
+# Right foot
+ellipse "right_foot": position (440, 520) size (40, 25) color white
+
+# Tail
+circle "tail": position (470, 420) radius 8 color #FF0000
