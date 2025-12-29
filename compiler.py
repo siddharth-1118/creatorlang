@@ -93,6 +93,58 @@ class CreatorLangCompiler:
                     })
                 except (ValueError, IndexError) as e:
                     print(f"Warning: Could not parse ellipse line: {line}")
+            
+            # Parse lines: line "name": from (x1, y1) to (x2, y2) color COLOR
+            elif line.startswith('line'):
+                parts = line.split()
+                try:
+                    name = parts[1].strip('":')  
+                    from_idx = parts.index('from')
+                    x1 = int(parts[from_idx + 1].strip('(,'))
+                    y1 = int(parts[from_idx + 2].strip('),'))
+                    to_idx = parts.index('to')
+                    x2 = int(parts[to_idx + 1].strip('(,'))
+                    y2 = int(parts[to_idx + 2].strip('),'))
+                    color_idx = parts.index('color')
+                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'black'
+                    
+                    self.shapes.append({
+                        'type': 'line',
+                        'name': name,
+                        'x1': x1,
+                        'y1': y1,
+                        'x2': x2,
+                        'y2': y2,
+                        'color': color
+                    })
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not parse line: {line}")
+            
+            # Parse rectangles: rectangle "name": position (x, y) size (w, h) color COLOR
+            elif line.startswith('rectangle'):
+                parts = line.split()
+                try:
+                    name = parts[1].strip('":')  
+                    pos_idx = parts.index('position')
+                    x = int(parts[pos_idx + 1].strip('(,'))
+                    y = int(parts[pos_idx + 2].strip('),'))
+                    size_idx = parts.index('size')
+                    width = int(parts[size_idx + 1].strip('(,'))
+                    height = int(parts[size_idx + 2].strip('),'))
+                    color_idx = parts.index('color')
+                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
+                    
+                    self.shapes.append({
+                        'type': 'rectangle',
+                        'name': name,
+                        'x': x,
+                        'y': y,
+                        'width': width,
+                        'height': height,
+                        'color': color
+                    })
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not parse rectangle: {line}")
         
         # Set defaults if not specified
         if 'width' not in self.video_config:
@@ -159,6 +211,16 @@ class CreatorLangCompiler:
                 x, y = shape['x'], shape['y']
                 w, h = shape['width']//2, shape['height']//2
                 draw.ellipse([x-w, y-h, x+w, y+h], fill=color)
+            
+            elif shape['type'] == 'line':
+                x1, y1 = shape['x1'], shape['y1']
+                x2, y2 = shape['x2'], shape['y2']
+                draw.line([(x1, y1), (x2, y2)], fill=color, width=2)
+            
+            elif shape['type'] == 'rectangle':
+                x, y = shape['x'], shape['y']
+                w, h = shape['width'], shape['height']
+                draw.rectangle([x, y, x+w, y+h], fill=color)
         
         # Save output
         output_path = os.path.join(self.output_dir, 'doraemon_frame.png')
