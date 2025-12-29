@@ -1,0 +1,22 @@
+// Simple test for CreatorLang compiler
+
+CREATE SHAPE AS circle {
+  type: "circle",
+  radius: 50,
+  color: "blue"
+}
+
+CREATE SHAPE AS square {
+  type: "rectangle",
+  width: 100,
+  height: 100,
+  color: "red"
+}
+
+SCENE main {
+  background: "white",
+  width: 800,
+  height: 600
+}
+
+RENDER main
