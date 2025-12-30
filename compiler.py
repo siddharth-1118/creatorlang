@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CreatorLang Compiler v3 - Fixed line-by-line parser"""
+"""CreatorLang Compiler v4 - Multi-line Animation Parser"""
 
 import re
 import sys
@@ -13,26 +13,36 @@ class CreatorLangCompiler:
         self.output_dir = "output"
         self.video_config = {}
         self.shapes = []
+        self.current_shape = None
+        self.current_indent = 0
         
     def parse(self):
-        """Parse using line-by-line approach"""
+        """Parse CreatorLang file with multi-line support"""
         with open(self.source_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         
-        for line in lines:
-            line = line.strip()
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            original_line = line
+            line = line.rstrip()
             
             # Skip comments and empty lines
-            if not line or line.startswith('#'):
+            if not line.strip() or line.strip().startswith('#'):
+                i += 1
                 continue
             
+            # Get indentation level
+            indent = len(line) - len(line.lstrip())
+            line = line.strip()
+            
             # Parse video config
-            if line.startswith('video'):
+            if line.startswith('video '):
                 match = re.search(r'"([^"]+)"', line)
                 if match:
                     self.video_config['name'] = match.group(1)
             
-            elif line.startswith('size'):
+            elif line.startswith('size '):
                 match = re.search(r'(\d+)x(\d+)', line)
                 if match:
                     self.video_config['width'] = int(match.group(1))
@@ -44,115 +54,150 @@ class CreatorLangCompiler:
                     colors = [c.strip() for c in match.group(1).split(',')]
                     self.video_config['background'] = colors
             
-            # Parse circles: circle "name": position (x, y) radius R color COLOR
-            elif line.startswith('circle'):
-                parts = line.split()
-                try:
-                    name = parts[1].strip('":')  
-                    pos_idx = parts.index('position')
-                    x = int(parts[pos_idx + 1].strip('(,'))
-                    y = int(parts[pos_idx + 2].strip('),'))
-                    radius_idx = parts.index('radius')
-                    radius = int(parts[radius_idx + 1])
-                    color_idx = parts.index('color')
-                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
-                    
-                    self.shapes.append({
-                        'type': 'circle',
-                        'name': name,
-                        'x': x,
-                        'y': y,
-                        'radius': radius,
-                        'color': color
-                    })
-                except (ValueError, IndexError) as e:
-                    print(f"Warning: Could not parse circle line: {line}")
+            # Parse shape declarations (colon at end indicates multi-line)
+            elif line.startswith(('circle ', 'ellipse ', 'rectangle ', 'line ')):
+                if line.endswith(':'):
+                    # Multi-line format: collect properties from following lines
+                    shape_type = line.split()[0]
+                    name_match = re.search(r'"([^"]+)"', line)
+                    if name_match:
+                        shape_name = name_match.group(1)
+                        shape_data = {'type': shape_type, 'name': shape_name}
+                        
+                        # Read properties from indented lines
+                        i += 1
+                        while i < len(lines):
+                            next_line = lines[i].rstrip()
+                            if not next_line.strip() or next_line.strip().startswith('#'):
+                                i += 1
+                                continue
+                            
+                            next_indent = len(next_line) - len(next_line.lstrip())
+                            if next_indent <= indent:
+                                i -= 1  # Back up one line
+                                break
+                            
+                            prop_line = next_line.strip()
+                            self._parse_property(prop_line, shape_data)
+                            i += 1
+                        
+                        self._finalize_shape(shape_data)
+                else:
+                    # Single-line format (legacy support)
+                    self._parse_single_line_shape(line)
             
-            # Parse ellipses: ellipse "name": position (x, y) size (w, h) color COLOR
-            elif line.startswith('ellipse'):
-                parts = line.split()
-                try:
-                    name = parts[1].strip('":')  
-                    pos_idx = parts.index('position')
-                    x = int(parts[pos_idx + 1].strip('(,'))
-                    y = int(parts[pos_idx + 2].strip('),'))
-                    size_idx = parts.index('size')
-                    width = int(parts[size_idx + 1].strip('(,'))
-                    height = int(parts[size_idx + 2].strip('),'))
-                    color_idx = parts.index('color')
-                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
-                    
-                    self.shapes.append({
-                        'type': 'ellipse',
-                        'name': name,
-                        'x': x,
-                        'y': y,
-                        'width': width,
-                        'height': height,
-                        'color': color
-                    })
-                except (ValueError, IndexError) as e:
-                    print(f"Warning: Could not parse ellipse line: {line}")
-            
-            # Parse lines: line "name": from (x1, y1) to (x2, y2) color COLOR
-            elif line.startswith('line'):
-                parts = line.split()
-                try:
-                    name = parts[1].strip('":')  
-                    from_idx = parts.index('from')
-                    x1 = int(parts[from_idx + 1].strip('(,'))
-                    y1 = int(parts[from_idx + 2].strip('),'))
-                    to_idx = parts.index('to')
-                    x2 = int(parts[to_idx + 1].strip('(,'))
-                    y2 = int(parts[to_idx + 2].strip('),'))
-                    color_idx = parts.index('color')
-                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'black'
-                    
-                    self.shapes.append({
-                        'type': 'line',
-                        'name': name,
-                        'x1': x1,
-                        'y1': y1,
-                        'x2': x2,
-                        'y2': y2,
-                        'color': color
-                    })
-                except (ValueError, IndexError) as e:
-                    print(f"Warning: Could not parse line: {line}")
-            
-            # Parse rectangles: rectangle "name": position (x, y) size (w, h) color COLOR
-            elif line.startswith('rectangle'):
-                parts = line.split()
-                try:
-                    name = parts[1].strip('":')  
-                    pos_idx = parts.index('position')
-                    x = int(parts[pos_idx + 1].strip('(,'))
-                    y = int(parts[pos_idx + 2].strip('),'))
-                    size_idx = parts.index('size')
-                    width = int(parts[size_idx + 1].strip('(,'))
-                    height = int(parts[size_idx + 2].strip('),'))
-                    color_idx = parts.index('color')
-                    color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
-                    
-                    self.shapes.append({
-                        'type': 'rectangle',
-                        'name': name,
-                        'x': x,
-                        'y': y,
-                        'width': width,
-                        'height': height,
-                        'color': color
-                    })
-                except (ValueError, IndexError) as e:
-                    print(f"Warning: Could not parse rectangle: {line}")
+            i += 1
         
-        # Set defaults if not specified
+        # Set defaults
         if 'width' not in self.video_config:
-            self.video_config['width'] = 800
+            self.video_config['width'] = 1920
         if 'height' not in self.video_config:
-            self.video_config['height'] = 600
+            self.video_config['height'] = 1080
         
-        print(f"Parsed {len(self.shapes)} shapes from {self.source_file}")
+        print(f"✓ Parsed {len(self.shapes)} shapes from {self.source_file}")
+    
+    def _parse_property(self, line, shape_data):
+        """Parse individual property lines"""
+        if line.startswith('position '):
+            match = re.search(r'\((-?\d+),\s*(-?\d+)\)', line)
+            if match:
+                shape_data['x'] = int(match.group(1))
+                shape_data['y'] = int(match.group(2))
+        
+        elif line.startswith('radius '):
+            match = re.search(r'radius\s+(\d+)', line)
+            if match:
+                shape_data['radius'] = int(match.group(1))
+        
+        elif line.startswith('size '):
+            match = re.search(r'\((\d+),\s*(\d+)\)', line)
+            if match:
+                shape_data['width'] = int(match.group(1))
+                shape_data['height'] = int(match.group(2))
+        
+        elif line.startswith('color '):
+            color = line.split('color ', 1)[1].strip()
+            shape_data['color'] = color
+        
+        elif line.startswith('from '):
+            match = re.search(r'from\s+\((-?\d+),\s*(-?\d+)\)\s+to\s+\((-?\d+),\s*(-?\d+)\)', line)
+            if match:
+                shape_data['x1'] = int(match.group(1))
+                shape_data['y1'] = int(match.group(2))
+                shape_data['x2'] = int(match.group(3))
+                shape_data['y2'] = int(match.group(4))
+    
+    def _finalize_shape(self, shape_data):
+        """Add completed shape to shapes list"""
+        if shape_data['type'] in ['circle', 'ellipse', 'rectangle', 'line']:
+            self.shapes.append(shape_data)
+    
+    def _parse_single_line_shape(self, line):
+        """Parse legacy single-line shape format"""
+        parts = line.split()
+        try:
+            shape_type = parts[0]
+            name = parts[1].strip('":')
+            
+            if shape_type == 'circle':
+                pos_idx = parts.index('position')
+                x = int(parts[pos_idx + 1].strip('(,'))
+                y = int(parts[pos_idx + 2].strip('),'))
+                radius_idx = parts.index('radius')
+                radius = int(parts[radius_idx + 1])
+                color_idx = parts.index('color')
+                color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
+                
+                self.shapes.append({
+                    'type': 'circle',
+                    'name': name,
+                    'x': x,
+                    'y': y,
+                    'radius': radius,
+                    'color': color
+                })
+            
+            elif shape_type in ['ellipse', 'rectangle']:
+                pos_idx = parts.index('position')
+                x = int(parts[pos_idx + 1].strip('(,'))
+                y = int(parts[pos_idx + 2].strip('),'))
+                size_idx = parts.index('size')
+                width = int(parts[size_idx + 1].strip('(,'))
+                height = int(parts[size_idx + 2].strip('),'))
+                color_idx = parts.index('color')
+                color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'white'
+                
+                self.shapes.append({
+                    'type': shape_type,
+                    'name': name,
+                    'x': x,
+                    'y': y,
+                    'width': width,
+                    'height': height,
+                    'color': color
+                })
+            
+            elif shape_type == 'line':
+                from_idx = parts.index('from')
+                x1 = int(parts[from_idx + 1].strip('(,'))
+                y1 = int(parts[from_idx + 2].strip('),'))
+                to_idx = parts.index('to')
+                x2 = int(parts[to_idx + 1].strip('(,'))
+                y2 = int(parts[to_idx + 2].strip('),'))
+                color_idx = parts.index('color')
+                color = parts[color_idx + 1] if color_idx + 1 < len(parts) else 'black'
+                
+                self.shapes.append({
+                    'type': 'line',
+                    'name': name,
+                    'x1': x1,
+                    'y1': y1,
+                    'x2': x2,
+                    'y2': y2,
+                    'color': color
+                })
+        except (ValueError, IndexError) as e:
+            print(f"Warning: Could not parse line: {line}")
     
     def _parse_color(self, color_str):
         """Convert color string to RGB tuple"""
@@ -201,7 +246,7 @@ class CreatorLangCompiler:
         
         # Draw all shapes
         for shape in self.shapes:
-            color = self._parse_color(shape['color'])
+            color = self._parse_color(shape.get('color', 'white'))
             
             if shape['type'] == 'circle':
                 x, y, r = shape['x'], shape['y'], shape['radius']
@@ -209,17 +254,17 @@ class CreatorLangCompiler:
             
             elif shape['type'] == 'ellipse':
                 x, y = shape['x'], shape['y']
-                w, h = shape['width']//2, shape['height']//2
+                w, h = shape.get('width', 50)//2, shape.get('height', 50)//2
                 draw.ellipse([x-w, y-h, x+w, y+h], fill=color)
             
             elif shape['type'] == 'line':
-                x1, y1 = shape['x1'], shape['y1']
-                x2, y2 = shape['x2'], shape['y2']
+                x1, y1 = shape.get('x1', 0), shape.get('y1', 0)
+                x2, y2 = shape.get('x2', 0), shape.get('y2', 0)
                 draw.line([(x1, y1), (x2, y2)], fill=color, width=2)
             
             elif shape['type'] == 'rectangle':
                 x, y = shape['x'], shape['y']
-                w, h = shape['width'], shape['height']
+                w, h = shape.get('width', 50), shape.get('height', 50)
                 draw.rectangle([x, y, x+w, y+h], fill=color)
         
         # Save output
