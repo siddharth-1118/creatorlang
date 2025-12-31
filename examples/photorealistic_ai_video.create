@@ -1,19 +1,20 @@
 # CreatorLang v2.0 - Photorealistic AI Video Generation Example
 # This example shows how to create Hollywood-quality videos like the lion video
 # Integrates with Runway ML Gen-4 for photorealistic rendering
+# SIMPLE ENGLISH VERSION
 
 # STEP 1: Define your scene
-సీన్ lion_savanna_chase:
-    పేరు: "Photorealistic Lion Running"
-    వ్యవధి: 5  # seconds
-    రిజల్యూషన్: (1920, 1080)
+scene lion_savanna_chase:
+    name: "Photorealistic Lion Running"
+    duration: 5  # seconds
+    resolution: (1920, 1080)
     fps: 30
-    నాణ్యత: "photorealistic"
+    quality: "photorealistic"
 
 # STEP 2: Create AI image generation prompt
-చిత్రం_ప్రాంప్ట్ = ప్రాంప్ట్.సృష్టించు(
-    వివరణ: "Photorealistic majestic male lion running through African savanna at golden hour",
-    వివరాలు: [
+image_prompt = prompt.create(
+    description: "Photorealistic majestic male lion running through African savanna at golden hour",
+    details: [
         "powerful muscles visible",
         "mane flowing in wind",
         "cinematic lighting",
@@ -24,64 +25,64 @@
         "dramatic lighting",
         "dust particles in air"
     ],
-    శైలి: "photorealistic",
-    కెమెరా: "RED cinema camera, 85mm lens, f/2.8"
+    style: "photorealistic",
+    camera: "RED cinema camera, 85mm lens, f/2.8"
 )
 
 # STEP 3: Generate base image using AI
-బేస్_చిత్రం = AI.చిత్రం_సృష్టించు(
-    ప్రాంప్ట్: చిత్రం_ప్రాంప్ట్,
-    మోడల్: "Gemini-Flash-2.5",  # or "DALL-E-3", "Midjourney"
-    పరిమాణం: (1344, 756),  # 16:9 cinematic
-    నాణ్యత: "maximum"
+base_image = AI.generate_image(
+    prompt: image_prompt,
+    model: "Gemini-Flash-2.5",  # or "DALL-E-3", "Midjourney"
+    size: (1344, 756),  # 16:9 cinematic
+    quality: "maximum"
 )
 
 # STEP 4: Define motion for animation
-చలనం_ప్రాంప్ట్ = ప్రాంప్ట్.చలనం(
-    చర్య: "Lion running powerfully forward through the savanna",
-    వివరాలు: [
+motion_prompt = prompt.motion(
+    action: "Lion running powerfully forward through the savanna",
+    details: [
         "dynamic motion",
         "muscles rippling",
         "mane flowing in wind",
         "camera following the movement",
         "cinematic slow motion"
     ],
-    వేగం: "medium",
-    కెమెరా_చలనం: "tracking shot"
+    speed: "medium",
+    camera_movement: "tracking shot"
 )
 
 # STEP 5: Generate photorealistic video using AI
-వీడియో = AI.వీడియో_సృష్టించు(
-    బేస్_చిత్రం: బేస్_చిత్రం,
-    చలనం: చలనం_ప్రాంప్ట్,
-    మోడల్: "Runway-Gen4-Turbo",  # or "Pika", "Stable-Video"
-    వ్యవధి: 5,
-    నాణ్యత: "professional",
-    ఫ్రేమ్_రేట్: 30
+video = AI.generate_video(
+    base_image: base_image,
+    motion: motion_prompt,
+    model: "Runway-Gen4-Turbo",  # or "Pika", "Stable-Video"
+    duration: 5,
+    quality: "professional",
+    frame_rate: 30
 )
 
 # STEP 6: Enhance with VFX (optional)
-వీడియో.VFX_చేర్చు(
-    ప్రభావాలు: [
-        ధూళి_కణాలు(సాంద్రత: 0.8, రంగు: (200, 180, 150)),
-        చలన_అస్పష్టత(బలం: 0.3),
-        రంగు_గ్రేడింగ్(శైలి: "golden_hour"),
-        లెన్స్_ఫ్లేర్(తీవ్రత: 0.2, స్థానం: (0.2, 0.1)),
-        వాతావరణ_పొగమంచు(సాంద్రత: 0.15)
+video.add_vfx(
+    effects: [
+        dust_particles(density: 0.8, color: (200, 180, 150)),
+        motion_blur(strength: 0.3),
+        color_grading(style: "golden_hour"),
+        lens_flare(intensity: 0.2, position: (0.2, 0.1)),
+        atmospheric_fog(density: 0.15)
     ]
 )
 
 # STEP 7: Add cinematic camera effects
-వీడియో.కెమెరా_ప్రభావాలు(
-    షేక్: 0.1,  # subtle camera shake
-    ఫోకస్_పుల్: సత్యం,
-    డెప్త్_ఆఫ్_ఫీల్డ్: 2.8,
-    వినియెట్: 0.15
+video.camera_effects(
+    shake: 0.1,  # subtle camera shake
+    focus_pull: true,
+    depth_of_field: 2.8,
+    vignette: 0.15
 )
 
 # STEP 8: Add sound design
-శబ్దం = ఆడియో.లోడ్(
-    ప్రభావాలు: [
+audio = Audio.load(
+    effects: [
         "lion_roar_distant.wav",
         "savanna_ambience.wav",
         "wind_through_grass.wav",
@@ -89,28 +90,28 @@
     ]
 )
 
-వీడియో.ఆడియో_చేర్చు(శబ్దం)
+video.add_audio(audio)
 
 # STEP 9: Export final video
-వీడియో.ఎగుమతి_చేయండి(
-    ఫైల్_పేరు: "lion_savanna_photorealistic.mp4",
-    కొడెక్: "H.265",
-    బిట్రేట్: "50M",
-    నాణ్యత: "maximum"
+video.export(
+    filename: "lion_savanna_photorealistic.mp4",
+    codec: "H.265",
+    bitrate: "50M",
+    quality: "maximum"
 )
 
-ముద్రించు("✅ Photorealistic video generated successfully!")
-ముద్రించు(f"వీడియో ఫైల్: {వీడియో.ఫైల్_పేరు}")
-ముద్రించు(f"వ్యవధి: {వీడియో.వ్యవధి} సెకన్లు")
-ముద్రించు(f"రిజల్యూషన్: {వీడియో.రిజల్యూషన్[0]}x{వీడియో.రిజల్యూషన్[1]}")
-ముద్రించు("🎬 Hollywood-quality output ready!")
+print("✅ Photorealistic video generated successfully!")
+print(f"Video file: {video.filename}")
+print(f"Duration: {video.duration} seconds")
+print(f"Resolution: {video.resolution[0]}x{video.resolution[1]}")
+print("🎬 Hollywood-quality output ready!")
 
 """
 OUTPUT:
 ✅ Photorealistic video generated successfully!
-వీడియో ఫైల్: lion_savanna_photorealistic.mp4
-వ్యవధి: 5 సెకన్లు
-రిజల్యూషన్: 1920x1080
+Video file: lion_savanna_photorealistic.mp4
+Duration: 5 seconds
+Resolution: 1920x1080
 🎬 Hollywood-quality output ready!
 """
 
